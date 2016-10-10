@@ -1,0 +1,13 @@
+{
+  "name": "autocss-loader",
+  "version": "0.0.2",
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "cevek",
+  "license": "ISC",
+  "dependencies": {
+    "esprima": "^3.1.0",
+    "gonzales-pe": "^3.4.4"
+  }
+}
