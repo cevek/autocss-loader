@@ -6,7 +6,7 @@ function createSelector(parseTree, name) {
 
     parseTree.content.push(gonzales.createNode({
         "type": "space",
-        "content": "\n\n"
+        "content": "\n"
     }));
 
     let node = gonzales.createNode({
@@ -50,6 +50,10 @@ function createSelector(parseTree, name) {
         ]
     });
     parseTree.content.push(node);
+    parseTree.content.push(gonzales.createNode({
+        "type": "space",
+        "content": "\n"
+    }));
 }
 
 function parseStyle(syntax, css) {
@@ -117,6 +121,10 @@ function parseStyle(syntax, css) {
 
 
 function diffStyle(syntax, css, names, excludes) {
+
+    // console.log('Original', css);
+    // console.log('---------------------------------');
+
     const res = parseStyle(syntax, css);
     if (excludes && excludes.constructor !== Array) {
         excludes = null;
@@ -148,6 +156,7 @@ function diffStyle(syntax, css, names, excludes) {
             res.parseTree.removeChild(item.index + shift);
         }
     }
+    // console.log(res.parseTree.toString());
     return res.parseTree.toString();
 }
 
@@ -183,10 +192,6 @@ const path = require('path');
 const configKey = 'autoCssLoader';
 module.exports = function (source, sourcemap) {
     this.cacheable();
-    // const callback = this.async();
-    // const headerPath = path.resolve("header.js");
-    // this.addDependency(headerPath);
-
     const config = {
         excludes: null,
         syntax: 'css'
@@ -194,7 +199,30 @@ module.exports = function (source, sourcemap) {
 
     const options = this.options[configKey];
     if (options) {
-        config.excludes = options.excluded;
+        const keys = Object.keys(options);
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            if (key !== 'syntax' && key !== 'excludes') {
+                console.error(`Unknown autoCssLoader.${key} param`);
+                return this.callback(null, source, sourcemap);
+            }
+        }
+        if (options.syntax !== 'sass' && options.syntax !== 'scss' && options.syntax !== 'less' && options.syntax !== 'css') {
+            console.error(`autoCssLoader.syntax is not correct, "${options.syntax}" is not sass, scss, less or css`);
+            return this.callback(null, source, sourcemap);
+        }
+        if (options.excludes) {
+            if (options.excludes.constructor != Array) {
+                console.error(`autoCssLoader.excludes is not array`);
+                return this.callback(null, source, sourcemap);
+            }
+            if (options.excludes.length && options.excludes[0].constructor !== RegExp) {
+                console.error(`autoCssLoader.excludes is not array of regexps`);
+                return this.callback(null, source, sourcemap);
+            }
+        }
+
+        config.excludes = options.excludes;
         config.syntax = options.syntax;
     }
 
@@ -207,7 +235,7 @@ module.exports = function (source, sourcemap) {
             let content = '';
             try {
                 content = fs.readFileSync(cssFile, 'utf-8');
-            } catch(e) {
+            } catch (e) {
                 return this.callback(null, source, sourcemap);
             }
             const newStyle = diffStyle(config.syntax, content, classNames, config.excludes);
