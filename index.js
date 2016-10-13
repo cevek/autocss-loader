@@ -239,7 +239,10 @@ module.exports = function (source, sourcemap) {
                 return this.callback(null, source, sourcemap);
             }
             const newStyle = diffStyle(config.syntax, content, classNames, config.excludes);
-            fs.writeFileSync(cssFile, newStyle);
+            if (newStyle !== source) {
+                fs.writeFileSync(cssFile, newStyle);
+                console.log('Update css file', path.relative(cssFile, process.cwd()));
+            }
         }
 
     } catch (e) {
